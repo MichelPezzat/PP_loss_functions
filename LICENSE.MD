@@ -26,4 +26,4 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Data
 
-The example data is taken from the [MDB Drums dataset](https://www.github.com/CarlSouthall/MDBDrums) [2] which is published under  [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/).
+The example data is taken from the [MDB Drums dataset](https://www.github.com/CarlSouthall/MDBDrums) [2] which is published under a  [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/).

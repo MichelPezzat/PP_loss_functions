@@ -6,7 +6,16 @@ A cnnSA3F5model [1,2] is utilised with CE, MI, MMD and WMD loss functions for au
 
 ## License
 
-This example  is published under the BSD license which allows redistribution and modification as long as the copyright and disclaimers are contained. The full license information can be found on the [license](https://github.com/CarlSouthall/PP_loss_functions/blob/master/LICENSE) page. 
+#### Code
+
+The code published under the BSD license which allows redistribution and modification as long as the copyright and disclaimers are contained. 
+
+#### Data
+
+The example data is taken from the [MDB Drums dataset](https://www.github.com/CarlSouthall/MDBDrums) [3] which is published under a  [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 InternatiThe example data is taken from the MDB Drums dataset which is published under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.onal License](https://creativecommons.org/licenses/by-sa/4.0/).
+
+The full license information can be found on the [license](https://github.com/CarlSouthall/PP_loss_functions/blob/master/LICENSE) page. 
+
 
 ## Required Packages
 

@@ -4,7 +4,7 @@ An example implementation of the multiple time-step loss functions for peak-pick
 
 A cnnSA3F5 model [1,2] is utilised with CE, MI, MMD and WMD loss functions for automatic drum transcription using data from [3]. 
 
-## License
+## Licenses
 
 #### Code
 
@@ -12,7 +12,7 @@ The code published under the BSD license which allows redistribution and modific
 
 #### Data
 
-The example data is taken from the [MDB Drums dataset](https://www.github.com/CarlSouthall/MDBDrums) [3] which is published under a  [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 InternatiThe example data is taken from the MDB Drums dataset which is published under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.onal License](https://creativecommons.org/licenses/by-sa/4.0/).
+The example data is taken from the [MDB Drums dataset](https://www.github.com/CarlSouthall/MDBDrums) [3] which is published under a  [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/).
 
 The full license information can be found on the [license](https://github.com/CarlSouthall/PP_loss_functions/blob/master/LICENSE) page. 
 

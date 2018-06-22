@@ -1,5 +1,7 @@
 ## Code
 
+BSD 2-Clause License
+
 Copyright (c) 2018, Carl Southall  
 All rights reserved.
 

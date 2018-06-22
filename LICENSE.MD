@@ -1,6 +1,6 @@
 ## Code
 
-Copyright (c) 2018, Carl Southall
+Copyright (c) 2018, Carl Southall  
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

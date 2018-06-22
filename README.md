@@ -12,7 +12,8 @@ This example  is published under the BSD license which allows redistribution and
 
 • [numpy](https://www.numpy.org)   
 • [tensorflow](https://www.tensorflow.org/)  
-• [easytf](https://github.com/CarlSouthall/PP_loss_functions)
+• [easytf](https://github.com/CarlSouthall/easytf)  
+• [matplotlib](https://matplotlib.org/)
 
 
 

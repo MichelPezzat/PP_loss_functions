@@ -1,6 +1,6 @@
 # PP_loss_functions
 
-An example implementation of the multiple time-step loss functions for peak-picking proposed in [1].
+An open source implementation of the multiple time-step loss functions for peak-picking proposed in [1].
 
 A cnnSA3F5 model [1,2] is utilised with CE, MI, MMD and WMD loss functions for automatic drum transcription using data from [3]. 
 

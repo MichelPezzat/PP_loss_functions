@@ -16,9 +16,9 @@
 #  Retrieval Conference (ISMIR), Paris, France, 2018.
 #
 #  [2] Southall, Carl, Ryan Stables and Jason Hockman. 2018. 
-#  Player Vs Transcriber: A Game Approach to Automatic Drum Transcription.
-#  In Proceedings of the 19th International Society for Music Information
-#  Retrieval Conference (ISMIR), Paris, France, 2018.
+#  Player Vs Transcriber: A Game Approach to Data Manipulation for Automatic
+#  Drum Transcription. In Proceedings of the 19th International Society for
+#  Music Information Retrieval Conference (ISMIR), Paris, France, 2018.
 #
 #
 #################################################################################

@@ -31,14 +31,21 @@ from tensorflow.contrib import rnn
 import os
 
 eps=np.finfo(float).eps
-
+alpha = 0.5
+gamma = 2
 #################################################################################
 
 ## loss functions
 
 def cross_entropy_form(pred,lab):
     out=(lab * tf.log(pred))+((1-lab)*(tf.log(1-pred)))
+
     return out
+def cross_entropy_focal_form(pred,lab):
+    out =  ( lab *alpha * tf.pow(1 -  pred, gamma) * tf.log( pred) + (1-alpha) * (1-lab) * tf.pow(pred, gamma) * tf.log(1 - pred))
+    return out
+#-1 * labels_ *self._alpha * mx.nd.power(1 -  pro + self.eps, self._gamma) * mx.nd.log( pro+self.eps) - (1-self._alpha) * (1-labels_) * mx.nd.power(pro + self.eps, self._gamma) * mx.nd.log(1 - pro + self.eps)
+
 
 def mean_squared_form(pred,lab):
     out=tf.square(lab-pred)
@@ -68,12 +75,13 @@ def MMD(preds,labs,weighting,seq_len):
    cost=tf.reduce_mean(tf.add(tf.reshape(stand_ce,[-1]),(weighting*tf.add(tf.reshape(future_ce,[-1]),tf.reshape(previous_ce,[-1])))))
    return cost
 
-def WMD(preds,labs,weighting,seq_len,FP_weighting_):      
-   stand_ce=tf.map_fn(lambda x: -tf.reduce_sum(cross_entropy_form(x[0],x[1]), reduction_indices=[1]),(preds[:,1:seq_len+1],labs[:,1:seq_len+1]),dtype=(tf.float32))    
+def WMD(preds,labs,weighting,seq_len,FP_weighting_,cross_entropy_fun):      
+   stand_ce=tf.map_fn(lambda x: -tf.reduce_sum(cross_entropy_fun(x[0],x[1]), reduction_indices=[1]),(preds[:,1:seq_len+1],labs[:,1:seq_len+1]),dtype=(tf.float32))    
    previous_ce=tf.map_fn(lambda x: -tf.reduce_sum(weighted_cross_entropy_peak_dif_form(x[0],x[1],x[2],x[3],FP_weighting_), reduction_indices=[1]), (preds[:,1:seq_len+1],labs[:,1:seq_len+1],preds[:,:seq_len],labs[:,:seq_len]),dtype=(tf.float32))
    future_ce=tf.map_fn(lambda x: -tf.reduce_sum(weighted_cross_entropy_peak_dif_form(x[0],x[1],x[2],x[3],FP_weighting_), reduction_indices=[1]), (preds[:,1:seq_len+1],labs[:,1:seq_len+1],preds[:,2:seq_len+2],labs[:,2:seq_len+2]),dtype=(tf.float32))
    cost=tf.reduce_mean(tf.add(tf.reshape(stand_ce,[-1]),(weighting*tf.add(tf.reshape(future_ce,[-1]),tf.reshape(previous_ce,[-1])))))
    return cost
+
 
 
 #################################################################################
@@ -116,6 +124,8 @@ class cnnSA3BF5():
          self.h_fc=[]
          self.w_conv=[]
          self.b_conv=[]
+         self.w_conv_gated=[]
+         self.b_conv_gated=[]
          self.h_conv=[]
          self.h_pool=[]
          self.h_drop_batch=[]
@@ -134,6 +144,7 @@ class cnnSA3BF5():
                
             self.biases = tf.Variable(tf.zeros([self.n_classes]))                     
             self.weights =tf.Variable(tf.random_normal([self.n_hidden[(len(self.n_hidden)-1)]*2, self.n_classes]))
+
             
      def cell_create_norm(self):
          cells = rnn.MultiRNNCell([rnn.LSTMCell(self.n_hidden[i]) for i in range(self.n_layers)], state_is_tuple=True)
@@ -165,16 +176,28 @@ class cnnSA3BF5():
         return bias
     
      def batch_dropout(self,data):
-#        batch_mean, batch_var=tf.nn.moments(data,[0])
-#        scale=tf.Variable(tf.ones([self.batch_size,data.get_shape()[1],data.get_shape()[2],data.get_shape()[3]]))
-#        beta=tf.Variable(tf.zeros([self.batch_size,data.get_shape()[1],data.get_shape()[2],data.get_shape()[3]])) ### removed for quicker implementation
-#        h_poolb=tf.nn.batch_normalization(data,batch_mean,batch_var,beta,scale,1e-3)
+        batch_mean, batch_var=tf.nn.moments(data,[0])
+        scale=tf.Variable(tf.ones([self.batch_size,data.get_shape()[1],data.get_shape()[2],data.get_shape()[3]]))
+        beta=tf.Variable(tf.zeros([self.batch_size,data.get_shape()[1],data.get_shape()[2],data.get_shape()[3]])) ### removed for quicker implementation
+        h_poolb=tf.nn.batch_normalization(data,batch_mean,batch_var,beta,scale,1e-3)
         return tf.nn.dropout(data, self.dropout_ph)
+
+     def gated_linear_layer(self,inputs, gates, name=None):
+
+        activation = tf.multiply(x=inputs, y=tf.sigmoid(gates), name=name)
+
+        return activation
         
      def conv_2dlayer(self,layer_num):
         self.w_conv.append(self.weight_init(self.conv_filter_shapes[layer_num]))
         self.b_conv.append(self.bias_init([self.conv_filter_shapes[layer_num][3]]))
-        self.h_conv.append(tf.nn.relu(self.conv2d(self.conv_layer_out[layer_num], self.w_conv[layer_num], self.conv_strides[layer_num], self.pad) + self.b_conv[layer_num]))
+        self.h1 = self.conv2d(self.conv_layer_out[layer_num], self.w_conv[layer_num], self.conv_strides[layer_num], self.pad) + self.b_conv[layer_num]
+        self.w_conv_gated.append(self.weight_init(self.conv_filter_shapes[layer_num]))
+        self.b_conv_gated.append(self.bias_init([self.conv_filter_shapes[layer_num][3]]))
+        self.h1_gated = self.conv2d(self.conv_layer_out[layer_num], self.w_conv_gated[layer_num], self.conv_strides[layer_num], self.pad) + self.b_conv_gated[layer_num]
+#       self.h1_glu = self.gated_linear_layer(inputs=self.h1, gates=self.h1_gated)
+#       self.h_conv.append(tf.nn.relu(self.h1_glu))
+        self.h_conv.append(self.gated_linear_layer(inputs=self.h1, gates=self.h1_gated))
         self.h_pool.append(self.max_pool(self.h_conv[layer_num],self.pool_window_sizes[layer_num],self.pool_strides[layer_num],self.pad))       
         self.conv_layer_out.append(self.batch_dropout(self.h_pool[layer_num]))  
         self.conv_layer_out.append(self.h_pool[layer_num])  
@@ -193,7 +216,7 @@ class cnnSA3BF5():
        self.seq_len=tf.placeholder("int32")
        self.dropout_ph = tf.placeholder("float32")
        
-       self.conv_layer_out.append(tf.expand_dims(tf.reshape(self.x_ph,[-1,11,self.input_feature_size/11]),3))
+       self.conv_layer_out.append(tf.expand_dims(tf.reshape(self.x_ph,[-1,11,int(self.input_feature_size/11)]),3))
        for i in range(len(self.conv_filter_shapes)):
             self.conv_2dlayer(i)
        self.reshape_layer()
@@ -233,11 +256,15 @@ class cnnSA3BF5():
        if self.cost_type=='CE':
            self.cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=tf.reshape(self.presoft,[-1,self.n_classes]), labels=tf.reshape(self.y_ph,[-1,self.n_classes])))              
        elif self.cost_type=='MI':
-           self.cost=MI(self.pred,self.y_ph,1/4.,self.seq_len-2)                
+           self.cost=MI(self.pred,self.y_ph,1/4.,self.seq_len-2)
+       elif self.cost_type=='CE-FL':
+           self.cost=cross_entropy_focal_form(self.pred,self.y_ph)            
        elif self.cost_type=='MMD':
            self.cost=MMD(self.pred,self.y_ph,1/4.,self.seq_len-2)                   
        elif self.cost_type=='WMD':
-           self.cost=WMD(self.pred,self.y_ph,1/4.,self.seq_len-2,1.0) 
+           self.cost=WMD(self.pred,self.y_ph,1/4.,self.seq_len-2,1.0,cross_entropy_form) 
+       elif self.cost_type=='WMD-FL':
+           self.cost=WMD(self.pred,self.y_ph,1/4.,self.seq_len-2,1.0,cross_entropy_focal_form) 
                
        self.optimize = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.cost) 
 
@@ -293,26 +320,31 @@ class cnnSA3BF5():
 # val and test = 1000 frames
     
 # load logarithmic spectrograms
-TrainSpec=np.load('ExampleTrainSpec.npy')
-TrainTarg=np.load('ExampleTrainTarg.npy')
-ValSpec=np.load('ExampleValSpec.npy')
-ValTarg=np.load('ExampleValTarg.npy')
-TestSpec=np.load('ExampleTestSpec.npy')
-TestTarg=np.load('ExampleTestTarg.npy')
+TrainSpec=np.load('ENSTSpecTrain.npy')
+TrainTarg=np.load('ENSTTargTrain.npy')
+ValSpec=np.load('ENSTSpecVal.npy')
+ValTarg=np.load('ENSTTargVal.npy')
+TestSpec=np.load('ENSTSpecTrain.npy')[3000:5000]
+TestTarg=np.load('ENSTTargTrain.npy')[3000:5000]
+
+print(np.shape(TrainSpec))
 
 # train the network and process test data
 AFs=[]
 AFs_train=[]
-loss_functions=['CE','WMD']
+loss_functions=['CE-FL','WMD-FL']
 #loss_functions=['CE','MI','MMD','WMD'] #change to this line to run all 4 versions
 for c in loss_functions:
     print(c)
     NN=cnnSA3BF5(TrainSpec,TrainTarg, ValSpec, ValTarg,'PP_Example_'+c,minimum_epoch=100, maximum_epoch=200, n_hidden=[50,50], n_classes=3, attention_number=3, dropout=0.75,  learning_rate=0.003 ,save_location=[],snippet_length=100,cost_type='CE',batch_size=1000,input_feature_size=84*11,conv_filter_shapes=[[3,3,1,32],[3,3,32,64]], conv_strides=[[1,1,1,1],[1,1,1,1]], pool_window_sizes=[[1,3,3,1],[1,3,3,1]])
     NN.create()
-    NN.train()
+    #NN.train()
     AFs.append(NN.implement([TestSpec])[0])
 
 # plot the different activation functions for KD
+np.save('AFs-CEflsa',AFs[0])
+np.save('AFs-WMDflsa',AFs[1])
+
 
 plt.subplot(3,1,1)
 plt.plot(TestTarg[:,0])    
@@ -320,7 +352,7 @@ plt.subplot(3,1,2)
 plt.plot(AFs[0][:,0])
 plt.subplot(3,1,3)
 plt.plot(AFs[1][:,0])
-
+plt.show()
 ## plot all 4 loss functions
 #
 #plt.subplot(5,1,1)
